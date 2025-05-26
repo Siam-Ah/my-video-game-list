@@ -55,6 +55,7 @@ export default async function handler(req, res) {
     const igdbRes = await fetch(`${IGDB_BASE_URL}/${endpoint}`, {
       method: "POST",
       headers: {
+        // eslint-disable-next-line
         "Client-ID": process.env.IGDB_CLIENT_ID,
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
