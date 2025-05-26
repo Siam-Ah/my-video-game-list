@@ -170,5 +170,4 @@ app.delete("/api/cache/:endpoint", (req, res) => {
   return res.status(400).json({ error: "Invalid endpoint" });
 });
 
-// 🔁 Export the handler for Vercel
-export const handler = serverless(app);
+export default serverless(app);
