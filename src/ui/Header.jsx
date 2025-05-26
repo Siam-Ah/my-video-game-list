@@ -57,7 +57,12 @@ export default function Header() {
     navigate(path);
   };
 
-  if (isLoading) return null;
+  if (isLoading)
+    return (
+      <StyledHeader>
+        <Search />
+      </StyledHeader>
+    );
 
   return (
     <StyledHeader>
