@@ -179,4 +179,5 @@ app.delete("/api/cache/:endpoint", (req, res) => {
 //   console.log(`Secure proxy server running on port ${PORT}`)
 // );
 
-export default app;
+// eslint-disable-next-line
+module.exports = app;
