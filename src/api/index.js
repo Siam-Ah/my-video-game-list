@@ -62,6 +62,11 @@ const CLIENT_ID = process.env.IGDB_CLIENT_ID;
 const CLIENT_SECRET = process.env.IGDB_CLIENT_SECRET;
 const IGDB_BASE_URL = "https://api.igdb.com/v4";
 
+// eslint-disable-next-line
+console.log("CLIENT_ID:", process.env.IGDB_CLIENT_ID);
+// eslint-disable-next-line
+console.log("CLIENT_SECRET:", process.env.IGDB_CLIENT_SECRET);
+
 // Token management
 let accessToken = "";
 let tokenExpiration = 0;
