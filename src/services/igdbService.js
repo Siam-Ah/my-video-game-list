@@ -1,6 +1,6 @@
 export async function igdbFetch(endpoint, query) {
   try {
-    const response = await fetch(`http://localhost:3000/api/igdb/${endpoint}`, {
+    const response = await fetch(`/api/igdb/${endpoint}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
