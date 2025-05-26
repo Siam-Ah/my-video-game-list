@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import supabase from "../services/supabase";
 import { getPlatforms } from "../services/platformService";
 import { useMemo } from "react";
+import { igdbFetch } from "../services/igdbService";
 
 export async function fetchTopRatedGames() {
   const { data: gamesWithRatings, error } = await supabase.rpc(
@@ -21,13 +22,7 @@ export async function fetchTopRatedGames() {
       where id = (${igdbIds.join(",")});`;
 
     try {
-      const response = await fetch("http://localhost:3000/api/igdb/games", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
-      });
-
-      const igdbGames = await response.json();
+      const igdbGames = await igdbFetch("games", query);
       allIgdbGames.push(...igdbGames);
     } catch (err) {
       console.error("Failed to fetch IGDB batch:", err);
