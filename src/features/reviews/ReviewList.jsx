@@ -120,7 +120,6 @@ export default function ReviewList({ igdbId, gameName }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [reviewsPerPage] = useState(5);
   const { data: reviews, isLoading, error } = useReviews(igdbId);
-  const isLoggedIn = true;
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
 
@@ -254,7 +253,7 @@ export default function ReviewList({ igdbId, gameName }) {
         </ReviewPlaceholder>
       )}
 
-      {isLoggedIn ? (
+      {user ? (
         <ReviewForm igdbId={igdbId} gameName={gameName} />
       ) : (
         <div style={{ marginTop: "3.2rem" }}>
