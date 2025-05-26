@@ -1,25 +1,14 @@
-import express from "express";
 import fetch from "node-fetch";
-import cors from "cors";
-import dotenv from "dotenv";
-import rateLimit from "express-rate-limit";
 import crypto from "crypto";
 
-dotenv.config();
-
-const app = express();
-
 const cache = new Map();
-
 const MAX_CACHE_SIZE = 1000;
-
 const ENDPOINT_TTLS = {
   platforms: 24 * 60 * 60 * 1000,
   genres: 24 * 60 * 60 * 1000,
   companies: 24 * 60 * 60 * 1000,
   default: 60 * 60 * 1000,
 };
-
 const VALID_ENDPOINTS = new Set([
   "games",
   "platforms",
@@ -45,26 +34,13 @@ function invalidateCache(endpoint) {
   }
 }
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-  })
-);
-
-// Config
+let accessToken = "";
+let tokenExpiration = 0;
 // eslint-disable-next-line
 const CLIENT_ID = process.env.IGDB_CLIENT_ID;
 // eslint-disable-next-line
 const CLIENT_SECRET = process.env.IGDB_CLIENT_SECRET;
 const IGDB_BASE_URL = "https://api.igdb.com/v4";
-
-// Token management
-let accessToken = "";
-let tokenExpiration = 0;
 
 async function getAccessToken() {
   if (Date.now() < tokenExpiration - 60000) return;
@@ -91,29 +67,47 @@ async function getAccessToken() {
   }
 }
 
-// Routes
-app.post("/api/igdb/:endpoint", async (req, res) => {
+// eslint-disable-next-line
+export async function handler(event, context) {
+  // Only allow POST requests
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: "Method not allowed" }),
+    };
+  }
+
   try {
-    const { endpoint } = req.params;
-    const query = req.body.query;
+    const { endpoint } = event.pathParameters;
+    const { query } = JSON.parse(event.body);
 
     // Request validation
     if (!VALID_ENDPOINTS.has(endpoint)) {
-      return res.status(400).json({ error: "Invalid endpoint" });
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Invalid endpoint" }),
+      };
     }
 
     if (!query) {
-      return res.status(400).json({ error: "Query parameter is required" });
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Query parameter is required" }),
+      };
     }
 
+    // Cache logic (same as before)
     const cacheKey = generateCacheKey(endpoint, query);
     const cached = cache.get(cacheKey);
 
     if (cached) {
       const cacheAge = Date.now() - cached.timestamp;
       if (cacheAge < getCacheTTL(endpoint)) {
-        res.set("X-Cache", "HIT");
-        return res.json(cached.data);
+        return {
+          statusCode: 200,
+          headers: { "X-Cache": "HIT" },
+          body: JSON.stringify(cached.data),
+        };
       }
       cache.delete(cacheKey);
     }
@@ -151,33 +145,18 @@ app.post("/api/igdb/:endpoint", async (req, res) => {
       });
     }
 
-    res.set("X-Cache", "MISS");
-    res.json(data);
+    return {
+      statusCode: 200,
+      headers: { "X-Cache": "MISS" },
+      body: JSON.stringify(data),
+    };
   } catch (error) {
     console.error("Proxy Error:", error);
-    res.status(500).json({
-      error: error.message,
-      // eslint-disable-next-line
-      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
-    });
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: error.message,
+      }),
+    };
   }
-});
-
-app.delete("/api/cache/:endpoint", (req, res) => {
-  const { endpoint } = req.params;
-  if (VALID_ENDPOINTS.has(endpoint)) {
-    invalidateCache(endpoint);
-    return res.json({ success: true });
-  }
-  return res.status(400).json({ error: "Invalid endpoint" });
-});
-
-// Start server
-// eslint-disable-next-line
-// const PORT = process.env.PORT || 3000;
-// app.listen(PORT, () =>
-//   console.log(`Secure proxy server running on port ${PORT}`)
-// );
-
-// eslint-disable-next-line
-module.exports = app;
+}
